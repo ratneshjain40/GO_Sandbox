@@ -19,7 +19,12 @@ func (node *astarNode) setHCost(target *astarNode) {
 	node.hcost = float32((math.Abs(float64(node.xcorodinate) - float64(target.xcorodinate))) + (math.Abs(float64(node.ycorodinate) - float64(target.ycorodinate))))
 }
 
-func (node *astarNode) fcost() float32 {
+func (node *astarNode) getFCost() float32 {
+	return node.gcost + node.hcost
+}
+
+func (node *astarNode) setFCost(target *astarNode) float32 {
+	node.setHCost(target)
 	return node.gcost + node.hcost
 }
 
@@ -28,6 +33,7 @@ type queue interface {
 	Init(size int)
 	Push(data interface{}, priority float32) (bool, error)
 	Pop() *interface{}
+	Flush()
 }
 
 type Astar struct {
@@ -64,10 +70,22 @@ func (algo *Astar) SetEnd(set [2]int) {
 	algo.end = algo.Grid[set[0]][set[1]]
 }
 
-func (algo *Astar) Config(walls *[][]int, weights *[][]int, hMutliplier int) {
-	if len(*walls) <= len(algo.Grid) && len((*walls)[0]) <= len(algo.Grid[0]) {
-		for i := 0; i < len(*walls); i++ {
+func (algo *Astar) SetWalls(walls *[][2]int) {
+	// TODO: Catch error for wall list index our for GRID range
+	wallList := *walls
+	for i := 0; i < len(wallList); i++ {
+		algo.Grid[wallList[i][0]][wallList[i][1]].closed = true
+	}
+}
 
+func (algo *Astar) Reset() {
+	algo.start = nil
+	algo.end = nil
+	algo.Openset.Flush()
+	for i := 0; i < len(algo.Grid); i++ {
+		for j := 0; j < len(algo.Grid[i]); j++ {
+			algo.Grid[i][j].closed = false
+			algo.Grid[i][j].visited = false
 		}
 	}
 }
@@ -97,14 +115,11 @@ func (algo *Astar) findAdjacentNeigbours(node *astarNode) []*astarNode {
 	return nodeList
 }
 
-func (algo *Astar) isCoordinateOpen(x int, y int) bool {
-	//return algo.Grid[x][y].closed &&
-}
-
 func (algo *Astar) addOpenSet(fromNode *astarNode, nodeList []*astarNode) {
 	tempGCost := fromNode.gcost + 1
 	for i := range nodeList {
 		if nodeList[i] != nil {
+			// If already added to openset - check is new value is better
 			if nodeList[i].visited && tempGCost < nodeList[i].gcost {
 				nodeList[i].prev = fromNode
 				nodeList[i].gcost = tempGCost
@@ -115,7 +130,7 @@ func (algo *Astar) addOpenSet(fromNode *astarNode, nodeList []*astarNode) {
 				nodeList[i].gcost = tempGCost
 				nodeList[i].prev = fromNode
 
-				algo.Openset.Push(nodeList[i], nodeList[i].fcost())
+				algo.Openset.Push(nodeList[i], nodeList[i].getFCost())
 				nodeList[i].visited = true
 				fmt.Printf("Pushed %v and visited %v: \n", *nodeList[i], nodeList[i].visited)
 
@@ -128,8 +143,10 @@ func (algo *Astar) Run() ([]*astarNode, error) {
 	if algo.start == nil || algo.end == nil {
 		return nil, fmt.Errorf("did not set start and end, use setstart/setend methods")
 	}
+
 	var path []*astarNode
-	algo.Openset.Push(algo.start, algo.start.fcost())
+
+	algo.Openset.Push(algo.start, algo.start.setFCost(algo.end))
 	for {
 		temp := *(algo.Openset.Pop())
 		var next *astarNode = temp.(*astarNode)
