@@ -38,6 +38,8 @@ type Astar struct {
 }
 
 func (algo *Astar) Init(rows int, cols int) {
+	algo.start = nil
+	algo.end = nil
 	algo.Grid = make([][]*astarNode, rows)
 
 	for i := range algo.Grid {
@@ -54,12 +56,20 @@ func (algo *Astar) Init(rows int, cols int) {
 	algo.Openset.Init(rows * cols)
 }
 
-func (algo *Astar) SetStart(x int, y int) {
-	algo.start = algo.Grid[x][y]
+func (algo *Astar) SetStart(set [2]int) {
+	algo.start = algo.Grid[set[0]][set[1]]
 }
 
-func (algo *Astar) SetEnd(x int, y int) {
-	algo.end = algo.Grid[x][y]
+func (algo *Astar) SetEnd(set [2]int) {
+	algo.end = algo.Grid[set[0]][set[1]]
+}
+
+func (algo *Astar) Config(walls *[][]int, weights *[][]int, hMutliplier int) {
+	if len(*walls) <= len(algo.Grid) && len((*walls)[0]) <= len(algo.Grid[0]) {
+		for i := 0; i < len(*walls); i++ {
+
+		}
+	}
 }
 
 func (algo *Astar) findAdjacentNeigbours(node *astarNode) []*astarNode {
@@ -87,6 +97,10 @@ func (algo *Astar) findAdjacentNeigbours(node *astarNode) []*astarNode {
 	return nodeList
 }
 
+func (algo *Astar) isCoordinateOpen(x int, y int) bool {
+	//return algo.Grid[x][y].closed &&
+}
+
 func (algo *Astar) addOpenSet(fromNode *astarNode, nodeList []*astarNode) {
 	tempGCost := fromNode.gcost + 1
 	for i := range nodeList {
@@ -94,13 +108,16 @@ func (algo *Astar) addOpenSet(fromNode *astarNode, nodeList []*astarNode) {
 			if nodeList[i].visited && tempGCost < nodeList[i].gcost {
 				nodeList[i].prev = fromNode
 				nodeList[i].gcost = tempGCost
+				fmt.Printf("Updated %v: \n", *nodeList[i])
+
 			} else {
 				nodeList[i].setHCost(algo.end)
 				nodeList[i].gcost = tempGCost
 				nodeList[i].prev = fromNode
 
 				algo.Openset.Push(nodeList[i], nodeList[i].fcost())
-				fmt.Printf("Pushed %v: \n", *nodeList[i])
+				nodeList[i].visited = true
+				fmt.Printf("Pushed %v and visited %v: \n", *nodeList[i], nodeList[i].visited)
 
 			}
 		}
@@ -116,7 +133,10 @@ func (algo *Astar) Run() ([]*astarNode, error) {
 	for {
 		temp := *(algo.Openset.Pop())
 		var next *astarNode = temp.(*astarNode)
-		fmt.Printf("\nPopped %v: \n", *next)
+
+		next.closed = true
+
+		fmt.Printf("\nPopped %v and closed %v: \n", *next, next.closed)
 
 		path = append(path, next)
 
