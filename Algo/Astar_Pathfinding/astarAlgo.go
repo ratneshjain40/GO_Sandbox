@@ -86,6 +86,9 @@ func (algo *Astar) Reset() {
 		for j := 0; j < len(algo.Grid[i]); j++ {
 			algo.Grid[i][j].closed = false
 			algo.Grid[i][j].visited = false
+			algo.Grid[i][j].gcost = 0
+			algo.Grid[i][j].hcost = 0
+			algo.Grid[i][j].prev = nil
 		}
 	}
 }
