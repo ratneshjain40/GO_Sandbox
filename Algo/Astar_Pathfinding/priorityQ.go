@@ -10,8 +10,9 @@ type QueueNode struct {
 }
 
 type PriorityQueue struct {
-	Length int
-	Queue  []*QueueNode
+	Length  int
+	Queue   []*QueueNode
+	MaxSize int
 }
 
 //<----------------------- QUEUE METHODS ----------------------->
@@ -19,6 +20,7 @@ type PriorityQueue struct {
 func (q *PriorityQueue) Init(size int) {
 	q.Queue = make([]*QueueNode, size)
 	q.Length = 0
+	q.MaxSize = size
 }
 
 func (q *PriorityQueue) Push(data interface{}, priority float32) (bool, error) {
@@ -65,4 +67,9 @@ func (q *PriorityQueue) Pop() *interface{} {
 	q.Queue = q.Queue[1:]
 	q.Length = q.Length - 1
 	return &node.Data
+}
+
+func (q *PriorityQueue) Flush() {
+	q.Queue = make([]*QueueNode, q.MaxSize)
+	q.Length = 0
 }
