@@ -5,6 +5,8 @@ import (
 	"math"
 )
 
+// TODO: Change how gcost is assigned and incremented to allow weights
+
 type astarNode struct {
 	xcorodinate int
 	ycorodinate int
@@ -95,8 +97,9 @@ func (algo *Astar) Reset() {
 	}
 }
 
-func (algo *Astar) findAdjacentNeigbours(node *astarNode) []*astarNode {
-	var nodeList []*astarNode
+// Helper function, finds neighbours that are not closed and in grid boundry
+func (algo *Astar) findValidNeigbours(node *astarNode) []*astarNode {
+	var nodeList []*astarNode = make([]*astarNode, 8)
 
 	rows := len(algo.Grid)
 	cols := len(algo.Grid[0])
@@ -119,7 +122,6 @@ func (algo *Astar) findAdjacentNeigbours(node *astarNode) []*astarNode {
 
 	return nodeList
 }
-
 func (algo *Astar) addOpenSet(fromNode *astarNode, nodeList []*astarNode) {
 	tempGCost := fromNode.gcost + 1
 	for i := range nodeList {
@@ -167,7 +169,7 @@ func (algo *Astar) Run() ([]*astarNode, error) {
 			algo.done = true
 			break
 		}
-		nodeList := algo.findAdjacentNeigbours(next)
+		nodeList := algo.findValidNeigbours(next)
 		algo.addOpenSet(next, nodeList)
 	}
 	return path, nil
@@ -202,7 +204,7 @@ func (algo *Astar) BufferedRun(buffer int) ([]*astarNode, bool, error) {
 			break
 		}
 
-		nodeList := algo.findAdjacentNeigbours(next)
+		nodeList := algo.findValidNeigbours(next)
 		algo.addOpenSet(next, nodeList)
 	}
 	return path, algo.done, nil
